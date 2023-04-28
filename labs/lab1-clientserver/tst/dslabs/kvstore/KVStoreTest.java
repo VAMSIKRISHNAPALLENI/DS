@@ -35,7 +35,7 @@ public class KVStoreTest extends DSLabsJUnitTest {
     @TestPointValue(5)
     @TestDescription("Basic key-value operations")
     public void test01BasicKVTests() {
-        assertEquals(keyNotFound(), kvStore.execute(get("FOO")));
+    assertEquals(keyNotFound(), kvStore.execute(get("FOO")));
         assertEquals(putOk(), kvStore.execute(put("FOO", "BAR")));
         assertEquals(appendResult("BARBAZ"),
                 kvStore.execute(append("FOO", "BAZ")));

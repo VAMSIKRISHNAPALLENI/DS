@@ -5,8 +5,11 @@ import dslabs.framework.Client;
 import dslabs.framework.Command;
 import dslabs.framework.Node;
 import dslabs.framework.Result;
+import java.util.Objects;
+import java.util.Timer;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import static dslabs.clientserver.ClientTimer.CLIENT_RETRY_MILLIS;
 
 /**
  * Simple client that sends requests to a single server and returns responses.
@@ -18,9 +21,10 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 class SimpleClient extends Node implements Client {
     private final Address serverAddress;
-
     // Your code here...
-
+    private int sequenceNum=0;
+    private Request request;
+    private  Reply reply;
     /* -------------------------------------------------------------------------
         Construction and Initialization
        -----------------------------------------------------------------------*/
@@ -40,18 +44,31 @@ class SimpleClient extends Node implements Client {
     @Override
     public synchronized void sendCommand(Command command) {
         // Your code here...
+        sequenceNum++;
+        reply = null;
+        Request r = new Request(command,sequenceNum);
+        request =r;
+        this.send(r,serverAddress);
+        this.set(new ClientTimer(r),CLIENT_RETRY_MILLIS);
     }
 
     @Override
     public synchronized boolean hasResult() {
         // Your code here...
-        return false;
+        if(reply==null)
+            return false;
+        return
+                reply.sequenceNum()==sequenceNum;
     }
 
     @Override
     public synchronized Result getResult() throws InterruptedException {
         // Your code here...
-        return null;
+        while(reply==null)
+        {
+            this.wait();
+        }
+        return reply.result();
     }
 
     /* -------------------------------------------------------------------------
@@ -59,6 +76,10 @@ class SimpleClient extends Node implements Client {
        -----------------------------------------------------------------------*/
     private synchronized void handleReply(Reply m, Address sender) {
         // Your code here...
+        if(Objects.equals(sequenceNum,m.sequenceNum())){
+            reply=m;
+            this.notify();
+        }
     }
 
     /* -------------------------------------------------------------------------
@@ -66,5 +87,9 @@ class SimpleClient extends Node implements Client {
        -----------------------------------------------------------------------*/
     private synchronized void onClientTimer(ClientTimer t) {
         // Your code here...
+        if(Objects.equals(sequenceNum,t.request().sequenceNum())){
+            this.send(t.request(),serverAddress);
+            this.set(new ClientTimer(t.request()),CLIENT_RETRY_MILLIS);
+        }
     }
 }

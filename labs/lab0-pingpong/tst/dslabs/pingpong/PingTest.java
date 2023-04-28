@@ -110,7 +110,7 @@ public final class PingTest extends BaseJUnitTest {
         runState.addClientWorker(client(1), repeatedPings(100));
 
         runSettings.networkUnreliable(true);
-
+        System.out.println(RESULTS_OK);
         runSettings.addInvariant(RESULTS_OK);
         runState.run(runSettings);
     }
@@ -126,7 +126,7 @@ public final class PingTest extends BaseJUnitTest {
                       .maxTimeSecs(10);
         bfs(initSearchState);
         assertGoalFound();
-
+        System.out.println(CLIENTS_DONE);
         System.out.println(
                 "Checking that all of the returned pongs match pings");
         searchSettings.clearGoals().addPrune(CLIENTS_DONE);
