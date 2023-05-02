@@ -1,11 +1,10 @@
 package dslabs.clientserver;
 
+import dslabs.atmostonce.AMOApplication;
+import dslabs.atmostonce.AMOResult;
 import dslabs.framework.Address;
 import dslabs.framework.Application;
 import dslabs.framework.Node;
-import dslabs.framework.Result;
-import dslabs.kvstore.KVStore;
-import dslabs.kvstore.KVStore.KVStoreResult;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
@@ -18,7 +17,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 class SimpleServer extends Node {
     // Your code here...
-private final KVStore kvStore;
+private final AMOApplication amoApplication;
     /* -------------------------------------------------------------------------
         Construction and Initialization
        -----------------------------------------------------------------------*/
@@ -26,7 +25,7 @@ private final KVStore kvStore;
         super(address);
 
         // Your code here...
-        kvStore= (KVStore) app;
+        amoApplication= new AMOApplication(app);
     }
 
     @Override
@@ -39,10 +38,15 @@ private final KVStore kvStore;
        -----------------------------------------------------------------------*/
     private void handleRequest(Request m, Address sender) {
         // Your code here...'
-      //KVStoreResult kvStoreResult=  kvStore.execute(m.command());
-       Result result = (Result) kvStore.execute(m.command());
-        //send(new Reply(reply.result(), reply.sequenceNum()),sender);
-
-        send(new Reply(result,m.sequenceNum()),sender);
+       AMOResult amoResult = amoApplication.getHistory(m.command().address());
+        if( amoResult!=null && m.sequenceNum() <= amoResult.sequence()) {
+            Reply reply = new Reply(amoResult.result(), m.sequenceNum());
+            send(reply,sender);
+        }
+        else{
+        amoResult = amoApplication.execute(m.command());
+        Reply reply = new Reply(amoResult.result(),m.sequenceNum());
+        send(reply,sender);
+        }
     }
 }

@@ -1,12 +1,11 @@
 package dslabs.clientserver;
-
+import dslabs.atmostonce.AMOCommand;
 import dslabs.framework.Address;
 import dslabs.framework.Client;
 import dslabs.framework.Command;
 import dslabs.framework.Node;
 import dslabs.framework.Result;
 import java.util.Objects;
-import java.util.Timer;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import static dslabs.clientserver.ClientTimer.CLIENT_RETRY_MILLIS;
@@ -21,6 +20,7 @@ import static dslabs.clientserver.ClientTimer.CLIENT_RETRY_MILLIS;
 @EqualsAndHashCode(callSuper = true)
 class SimpleClient extends Node implements Client {
     private final Address serverAddress;
+    private final Address clientAddress;
     // Your code here...
     private int sequenceNum=0;
     private Request request;
@@ -30,6 +30,7 @@ class SimpleClient extends Node implements Client {
        -----------------------------------------------------------------------*/
     public SimpleClient(Address address, Address serverAddress) {
         super(address);
+        this.clientAddress=address;
         this.serverAddress = serverAddress;
     }
 
@@ -46,7 +47,8 @@ class SimpleClient extends Node implements Client {
         // Your code here...
         sequenceNum++;
         reply = null;
-        Request r = new Request(command,sequenceNum);
+        AMOCommand amoCommand = new AMOCommand(command,clientAddress,sequenceNum);
+        Request r = new Request(amoCommand,sequenceNum);
         request =r;
         this.send(r,serverAddress);
         this.set(new ClientTimer(r),CLIENT_RETRY_MILLIS);
